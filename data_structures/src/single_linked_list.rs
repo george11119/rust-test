@@ -18,11 +18,14 @@ impl List {
         Self { head: None }
     }
 
-    pub fn test(&self) -> i32 {
-        5
+    pub fn add_first(&mut self, value: i32) {
+        let mut new_node = Box::new(Node { value, next: None });
+        let tmp = self.head.take();
+        new_node.next = tmp;
+        self.head = Some(new_node);
     }
 
-    pub fn add_node(&mut self, value: i32) {
+    pub fn add_last(&mut self, value: i32) {
         let new_node = Box::new(Node { value, next: None });
 
         let mut next = &mut self.head;
@@ -31,6 +34,25 @@ impl List {
         }
 
         *next = Some(new_node);
+    }
+
+    pub fn remove_first(&mut self) -> Option<i32> {
+        self.head.take().map(|node| {
+            self.head = node.next;
+            node.value
+        })
+    }
+
+    pub fn remove_last(&mut self) -> Option<i32> {
+        if self.head.is_none() {
+            return None;
+        }
+
+        let mut current = &mut self.head;
+        while current.as_ref().unwrap().next.is_some() {
+            current = &mut current.as_mut().unwrap().next;
+        }
+        Some(current.take().unwrap().value)
     }
 }
 
@@ -56,17 +78,22 @@ mod test {
     use super::List;
 
     #[test]
-    fn it_works() {
-        let list = List::new();
-        let x = list.test();
-        assert_eq!(x, 5);
-    }
-
-    #[test]
-    fn add_node() {
+    fn basic() {
         let mut list = List::new();
-        list.add_node(1);
-        list.add_node(2);
-        println!("{}", list);
+        list.add_first(3);
+        list.add_first(2);
+        list.add_first(1);
+        assert_eq!(list.remove_first(), Some(1));
+        assert_eq!(list.remove_first(), Some(2));
+        assert_eq!(list.remove_first(), Some(3));
+        assert_eq!(list.remove_first(), None);
+
+        list.add_last(1);
+        list.add_last(2);
+        list.add_last(3);
+        assert_eq!(list.remove_last(), Some(3));
+        assert_eq!(list.remove_last(), Some(2));
+        assert_eq!(list.remove_last(), Some(1));
+        assert_eq!(list.remove_last(), None);
     }
 }
