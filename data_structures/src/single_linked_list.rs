@@ -54,12 +54,32 @@ impl List {
         }
         Some(current.take().unwrap().value)
     }
+
+    pub fn peek_first(&self) -> Option<i32> {
+        // match &self.head {
+        //     Some(node) => Some(node.value),
+        //     None => None,
+        // }
+        self.head.as_ref().map(|node| node.value)
+    }
+
+    pub fn peek_last(&self) -> Option<i32> {
+        if self.head.is_none() {
+            return None;
+        }
+
+        let mut current = &self.head;
+        while current.as_ref().unwrap().next.is_some() {
+            current = &current.as_ref().unwrap().next;
+        }
+        Some(current.as_ref().unwrap().value)
+    }
 }
 
 impl fmt::Display for List {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.head.is_none() {
-            write!(f, "empty")
+            writeln!(f, "empty")
         } else {
             let mut print_result = String::from("");
             let mut next = &self.head;
@@ -95,5 +115,50 @@ mod test {
         assert_eq!(list.remove_last(), Some(2));
         assert_eq!(list.remove_last(), Some(1));
         assert_eq!(list.remove_last(), None);
+    }
+
+    #[test]
+    fn peek_first() {
+        let mut list = List::new();
+        assert_eq!(list.peek_first(), None);
+
+        list.add_last(1);
+        list.add_last(2);
+        list.add_last(3);
+
+        assert_eq!(list.peek_first(), Some(1));
+        list.remove_first();
+        assert_eq!(list.peek_first(), Some(2));
+        list.remove_first();
+        assert_eq!(list.peek_first(), Some(3));
+        list.remove_first();
+        assert_eq!(list.peek_first(), None);
+    }
+
+    #[test]
+    fn peek_last() {
+        let mut list = List::new();
+
+        list.add_last(1);
+        list.add_last(2);
+        list.add_last(3);
+
+        assert_eq!(list.peek_last(), Some(3));
+        list.remove_last();
+        assert_eq!(list.peek_last(), Some(2));
+        list.remove_last();
+        assert_eq!(list.peek_last(), Some(1));
+        list.remove_last();
+        assert_eq!(list.peek_last(), None);
+    }
+
+    #[test]
+    fn display() {
+        let mut list = List::new();
+        assert_eq!("empty\n", list.to_string());
+        list.add_last(1);
+        list.add_last(2);
+        list.add_last(3);
+        assert_eq!("1 -> 2 -> 3 -> None\n", list.to_string());
     }
 }
