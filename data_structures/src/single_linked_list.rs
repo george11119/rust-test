@@ -25,24 +25,29 @@ impl List {
     pub fn add_node(&mut self, value: i32) {
         let new_node = Box::new(Node { value, next: None });
 
-        match &mut self.head {
-            None => {
-                self.head = Some(new_node);
-            }
-            Some(current) => {
-                current.next = Some(new_node);
-
-                while let Some(current) = &current.next {
-                    println!("from add_node: {:?}", current);
-                }
-            }
+        let mut next = &mut self.head;
+        while let Some(node) = next {
+            next = &mut node.next;
         }
+
+        *next = Some(new_node);
     }
 }
 
 impl fmt::Display for List {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "empty")
+        if self.head.is_none() {
+            write!(f, "empty")
+        } else {
+            let mut print_result = String::from("");
+            let mut next = &self.head;
+            while let Some(node) = next {
+                print_result.push_str(&format!("{} -> ", node.value));
+                next = &node.next;
+            }
+            print_result.push_str("None");
+            writeln!(f, "{}", print_result)
+        }
     }
 }
 
@@ -61,9 +66,7 @@ mod test {
     fn add_node() {
         let mut list = List::new();
         list.add_node(1);
-        println!("{:?}", list);
         list.add_node(2);
-        println!("{:?}", list);
         println!("{}", list);
     }
 }
