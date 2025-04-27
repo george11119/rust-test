@@ -74,6 +74,62 @@ impl List {
         }
         Some(current.as_ref().unwrap().value)
     }
+
+    pub fn into_iter(self) -> IntoIter {
+        IntoIter(self)
+    }
+
+    pub fn iter(&self) -> Iter {
+        Iter {
+            next: self.head.as_deref(),
+        }
+    }
+
+    pub fn iter_mut(&mut self) -> IterMut {
+        IterMut {
+            next: self.head.as_deref_mut(),
+        }
+    }
+}
+
+pub struct IntoIter(List);
+
+impl Iterator for IntoIter {
+    type Item = i32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.remove_first()
+    }
+}
+
+pub struct Iter<'a> {
+    next: Option<&'a Node>,
+}
+
+impl<'a> Iterator for Iter<'a> {
+    type Item = &'a i32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next.map(|node| {
+            self.next = node.next.as_deref();
+            &node.value
+        })
+    }
+}
+
+pub struct IterMut<'a> {
+    next: Option<&'a mut Node>,
+}
+
+impl<'a> Iterator for IterMut<'a> {
+    type Item = &'a mut i32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next.take().map(|node| {
+            self.next = node.next.as_deref_mut();
+            &mut node.value
+        })
+    }
 }
 
 impl fmt::Display for List {
@@ -150,6 +206,64 @@ mod test {
         assert_eq!(list.peek_last(), Some(1));
         list.remove_last();
         assert_eq!(list.peek_last(), None);
+    }
+
+    #[test]
+    fn into_iter() {
+        let mut list = List::new();
+        list.add_last(1);
+        list.add_last(2);
+        list.add_last(3);
+
+        let mut list_iter = list.into_iter();
+        assert_eq!(list_iter.next(), Some(1));
+        assert_eq!(list_iter.next(), Some(2));
+        assert_eq!(list_iter.next(), Some(3));
+        assert_eq!(list_iter.next(), None);
+    }
+
+    #[test]
+    fn iter() {
+        let mut list = List::new();
+        list.add_last(1);
+        list.add_last(2);
+        list.add_last(3);
+
+        let mut list_iter = list.iter();
+        assert_eq!(list_iter.next(), Some(&1));
+        assert_eq!(list_iter.next(), Some(&2));
+        assert_eq!(list_iter.next(), Some(&3));
+        assert_eq!(list_iter.next(), None);
+
+        // list ownership should not have changed
+        assert_eq!(list.remove_last(), Some(3));
+        assert_eq!(list.remove_last(), Some(2));
+        assert_eq!(list.remove_last(), Some(1));
+        assert_eq!(list.remove_last(), None);
+    }
+
+    #[test]
+    fn iter_mut() {
+        let mut list = List::new();
+        list.add_last(1);
+        list.add_last(2);
+        list.add_last(3);
+
+        let mut list_iter = list.iter_mut();
+        assert_eq!(list_iter.next(), Some(&mut 1));
+        assert_eq!(list_iter.next(), Some(&mut 2));
+        assert_eq!(list_iter.next(), Some(&mut 3));
+        assert_eq!(list_iter.next(), None);
+
+        for val in list.iter_mut() {
+            *val *= 2;
+        }
+
+        // list ownership should not have changed
+        assert_eq!(list.remove_last(), Some(6));
+        assert_eq!(list.remove_last(), Some(4));
+        assert_eq!(list.remove_last(), Some(2));
+        assert_eq!(list.remove_last(), None);
     }
 
     #[test]
